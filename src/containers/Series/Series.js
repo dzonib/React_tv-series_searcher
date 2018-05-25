@@ -1,29 +1,47 @@
 import React, { Component } from 'react';
-import SeriesList from '../../components/SeriesList'
-import axios from 'axios'
+import SeriesList from '../../components/SeriesList';
+import Loader from '../../components/Loader'
+import axios from 'axios';
 
 export default class Series extends Component {
-
   state = {
-    series: []
-  }
+    series: [],
+    seriesName: '',
+    isFetching: false
+  };
 
-  componentDidMount() {
-    axios.get('http://api.tvmaze.com/search/shows?q=Vikings')
+  searchHandler = e => {
+    this.setState({ seriesName: e.target.value, isFetching: true });
+    console.log(this.state.series);
+    axios
+      .get(`http://api.tvmaze.com/search/shows?q=${e.target.value}`)
       .then(res => {
-        return res.data.forEach(item => {
-          this.setState({series: this.state.series.concat(item)})
-        })
-      })
-  }
+        this.setState(() => ({
+          series: res.data,
+          isFetching: false
+        }));
+      });
+  };
 
   render() {
+    const { series, seriesName, isFetching } = this.state;
+
     return (
       <div>
-
-        <SeriesList list={this.state.series}/>
-        
+        <div>
+          <input type="text" value={seriesName} onChange={this.searchHandler} />
+        </div>
+        {!isFetching && series.length === 0 &&
+          seriesName.trim() === '' && (
+            <p>Please enter series name in the input</p>
+          )}
+        {!isFetching && series.length === 0 &&
+          seriesName !== '' && (
+            <p>No tv series have been found with that name!</p>
+          )}
+        {isFetching && <Loader />}
+        {!isFetching && <SeriesList list={this.state.series} />}
       </div>
-    )
+    );
   }
 }
